@@ -1955,22 +1955,40 @@ export const useTalkStore = defineStore('talk',()=>{
   - 事件对象`$event`: 是包含事件相关信息的对象（`pageX`、`pageY`、`target`、`keyCode`）
 - 自定义事件：
   - 事件名是任意名称
-  - <strong style="color:red">事件对象`$event`: 是调用`emit`时所提供的数据，可以是任意类型！！！</strong >
+  - <strong style="color:red">事件对象`$event`: （对于自定义事件）是调用`emit`时所提供的数据，可以是任意类型【不能`.target`】！！！</strong >
+  - <strong style="color:red">事件对象`$event`: （对于原生事件，也就是定义在html标签如\<input\>, \<button\>上的普通事件如click）是事件对象（DOM元素），可以使用`.target`获取或用`.target.value`获取值！！！</strong >
+    - `<button @click="getAllChild($event)">test</button>` => `Event`
 
 3. 示例：
 
-   ```html
+   ```vue
    <!--在父组件中，给子组件绑定自定义事件：-->
    <Child @send-toy="toy = $event"/>
+   <Child @send-toy="saveToy"/>
    
    <!--注意区分原生事件与自定义事件中的$event-->
    <button @click="toy = $event">测试</button>
+   
+   <script setup lang="ts">
+     function saveToy(value) {
+       console.log(value)
+       toy.value = value
+     }
+   </script>
    ```
-
-   ```js
-   //子组件中，触发事件：
-   this.$emit('send-toy', 具体数据)
+   
+   ```vue
+   <template>
+     <button @click="emit('send-toy', toy)">test</button>
+   </template>
+   <script setup lang="ts">
+     // 子组件中声明自定义事件
+     const emit = defineEmits(['send-toy'])
+     // 触发事件
+     emit('send-toy', toy)
+   </script>
    ```
+   
 
 ## 6.3. 【mitt】
 
@@ -2074,7 +2092,7 @@ function sendToy(){
    <AtguiguInput :modelValue="userName" @update:model-value="userName = $event"/>
    ```
 
-   `AtguiguInput`组件中：
+   `AtguiguInput.vue`组件中：
 
    ```vue
    <template>
@@ -2205,19 +2223,79 @@ function sendToy(){
 </script>
 ```
 
-## 6.6. 【$refs、$parent】
+## 6.6. 【defineExpose、$refs、$parent】
 
-1. 概述：
+- defineExpose 获取某一个孩子的一个（一些）数据
 
-   * `$refs`用于 ：**父→子。**
-   * `$parent`用于：**子→父。**
+子组件 Child1.vue：
 
-2. 原理如下：
+```js
+// 数据
+let toy = ref('奥特曼')
+let book = ref(3)
+// 把数据交给外部
+defineExpose({toy,book})
+```
 
-   | 属性      | 说明                                                     |
-   | --------- | -------------------------------------------------------- |
-   | `$refs`   | 值为对象，包含所有被`ref`属性标识的`DOM`元素或组件实例。 |
-   | `$parent` | 值为对象，当前组件的父组件实例对象。                     |
+父组件 Father.vue：
+
+```vue
+<template>
+  <Child1 ref="c1"/>
+  <button @click="changeToy">修改Child1的玩具</button>
+</template>
+<script setup lang="ts">
+  let c1 = ref()
+  function changeToy(){
+	c1.value.toy = '小猪佩奇'
+  }
+</script>
+```
+
+- 使用`$refs`获取所有子组件defineExpose的数据【本质：**父→子**】
+
+| 属性    | 说明                                                     |
+| ------- | -------------------------------------------------------- |
+| `$refs` | 值为对象，包含所有被`ref`属性标识的`DOM`元素或组件实例。 |
+
+父组件：
+
+```vue
+<template>
+  <Child1 ref="c1"/>
+  <Child2 ref="c2"/>
+  <button @click="getAllChild($refs)">让所有孩子的书变多</button>
+</template>
+<script setup lang="ts">
+  function getAllChild(refs:{[key:string]:any}){
+	console.log(refs)
+	for (let key in refs){
+	  refs[key].book += 3
+	}
+  }
+</script>
+```
+
+- 使用`$parent`获取父组件defineExpose的数据【本质：**子→父**】
+
+| 属性      | 说明                                 |
+| --------- | ------------------------------------ |
+| `$parent` | 值为对象，当前组件的父组件实例对象。 |
+
+子组件：
+
+```vue
+<template>
+  <button @click="minusHouse($parent)">干掉父亲的一套房产</button>
+</template>
+<script setup lang="ts">
+  function minusHouse(parent:any){
+	parent.house -= 1
+  }
+</script>
+```
+
+
 
 ## 6.7. 【provide、inject】
 
@@ -2280,7 +2358,7 @@ function sendToy(){
    <script setup lang="ts" name="GrandChild">
      import { inject } from 'vue';
      // 注入数据
-    let {money,updateMoney} = inject('moneyContext',{money:0,updateMoney:(x:number)=>{}})
+     let {money,updateMoney} = inject('moneyContext',    {money:0,updateMoney:(x:number)=>{}})  // 第二个参数表示默认值
      let car = inject('car')
    </script>
    ```
@@ -2288,7 +2366,7 @@ function sendToy(){
 
 ## 6.8. 【pinia】
 
-参考之前`pinia`部分的讲解
+参考之前`pinia`部分
 
 ## 6.9. 【slot】
 
@@ -2297,44 +2375,57 @@ function sendToy(){
 ![img](http://49.232.112.44/images/default_slot.png)
 
 ```vue
-父组件中：
-        <Category title="今日热门游戏">
-          <ul>
-            <li v-for="g in games" :key="g.id">{{ g.name }}</li>
-          </ul>
-        </Category>
-子组件中：
-        <template>
-          <div class="item">
-            <h3>{{ title }}</h3>
-            <!-- 默认插槽 -->
-            <slot></slot>
-          </div>
-        </template>
+父组件Father.vue中：
+<Category title="今日热门游戏">
+  <ul>
+    <li v-for="g in games" :key="g.id">{{ g.name }}</li>
+  </ul>
+</Category>
+
+子组件Category.vue中：
+<template>
+  <div class="item">
+    <h3>{{ title }}</h3>
+    <!-- 默认插槽 -->
+    <slot>默认内容</slot>
+  </div>
+</template>
 ```
 
 ### 2. 具名插槽
 
+具名插槽，即具有名字的插槽
+
+对比默认插槽：默认插槽只有一个`<slot>`，可以给`<slot>`起一个名字成为具名插槽，由此实现多个插槽
+
+本质：对默认插槽的扩展
+
+两种写法：
+
+- `v-slot:name`
+- 语法糖：`#name`
+
 ```vue
-父组件中：
-        <Category title="今日热门游戏">
-          <template v-slot:s1>
-            <ul>
-              <li v-for="g in games" :key="g.id">{{ g.name }}</li>
-            </ul>
-          </template>
-          <template #s2>
-            <a href="">更多</a>
-          </template>
-        </Category>
-子组件中：
-        <template>
-          <div class="item">
-            <h3>{{ title }}</h3>
-            <slot name="s1"></slot>
-            <slot name="s2"></slot>
-          </div>
-        </template>
+父组件Father.vue中：
+<Category title="今日热门游戏">
+  <template v-slot:s1>
+    <ul>
+      <li v-for="g in games" :key="g.id">{{ g.name }}</li>
+    </ul>
+  </template>
+  <template #s2>
+    <a href="">更多</a>
+   </template>
+</Category>
+
+子组件Category.vue中：
+<template>
+  <div class="item">
+    <h3>{{ title }}</h3>
+    <slot name="s1"></slot>
+    <slot name="s2"></slot>
+  </div>
+</template>
 ```
 
 ### 3. 作用域插槽 
@@ -2344,33 +2435,35 @@ function sendToy(){
 3. 具体编码：
 
    ```vue
-   父组件中：
-         <Game v-slot="params">
-         <!-- <Game v-slot:default="params"> -->
-         <!-- <Game #default="params"> -->
-           <ul>
-             <li v-for="g in params.games" :key="g.id">{{ g.name }}</li>
-           </ul>
-         </Game>
+   父组件Father.vue中：
+   <Game v-slot="params">
+   <!-- <Game v-slot:default="params"> -->
+   <!-- <Game #default="params"> -->
+     <ul>
+       <li v-for="g in params.games" :key="g.id">{{ g.name }}</li>
+     </ul>
+   </Game>
    
-   子组件中：
-         <template>
-           <div class="category">
-             <h2>今日游戏榜单</h2>
-             <slot :games="games" a="哈哈"></slot>
-           </div>
-         </template>
+   子组件Game.vue中：
+   <template>
+     <div class="category">
+       <h2>今日游戏榜单</h2>
+       <slot :games="games" a="哈哈"></slot>
+     </div>
+   </template>
    
-         <script setup lang="ts" name="Category">
-           import {reactive} from 'vue'
-           let games = reactive([
-             {id:'asgdytsa01',name:'英雄联盟'},
-             {id:'asgdytsa02',name:'王者荣耀'},
-             {id:'asgdytsa03',name:'红色警戒'},
-             {id:'asgdytsa04',name:'斗罗大陆'}
-           ])
-         </script>
+   <script setup lang="ts" name="Category">
+     import {reactive} from 'vue'
+     let games = reactive([
+         {id:'asgdytsa01',name:'英雄联盟'},
+         {id:'asgdytsa02',name:'王者荣耀'},
+         {id:'asgdytsa03',name:'红色警戒'},
+         {id:'asgdytsa04',name:'斗罗大陆'}
+     ])
+   </script>
    ```
+
+3. 注意：作用于插槽也有名字（包括默认名称default）
 
 
 
@@ -2535,10 +2628,6 @@ export default function(initValue:string,delay:number){
   return {msg}
 }
 ```
-
-组件中使用：
-
-
 
 
 
