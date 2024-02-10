@@ -232,5 +232,171 @@ async function getData() {
     - 这也就意味着JavaScript代码，在同一个时刻只能做一件事【如果这件事非常耗时，当前线程可能被阻塞】
 - 真正耗时的操作，实际上并不是由JavaScript线程在执行的
     - 浏览器的每个进程是多线程的，那么其他线程可以来完成这个耗时的操作
-    - 比如网络请求、定时器，我们只需要在特性的时候执行应该有的回调即可
+    - 比如网络请求、定时器，我们只需要在特定的时候执行应该有的回调即可
 
+### 事件循环
+
+如果在执行 JavaScript 代码过程中有异步操作（例如 `setTimeout`），这个函数会被放入事件队列中，执行会立即结束【直到某一时刻再回调】，并不会阻塞后序代码的执行 => 由此形成了**事件循环**
+
+<img src="images/13-2.png" style="float: left; width: 90%">
+
+
+
+## 宏任务和微任务队列
+
+事件循环中并非只维护着一个队列，事实上是有两个队列：
+
+- **宏任务队列（macrotask queue）**：ajax、setTimeout、setInterval、DOM监听、UI Rendering等
+- **微任务队列（microtask queue）**：Promise的then回调、 Mutation Observer API、queueMicrotask()等
+
+事件循环对于两个队列的优先级：
+
+1. main script中的代码优先执行（编写的顶层script代码）
+2. 在执行任何一个宏任务之前**（不是队列，是一个宏任务）**，都会先查看微任务队列中是否有任务需要执行
+    - 也就是在宏任务执行之前，必须保证微任务队列是空的
+    - 如果微任务队列不为空，那么就优先执行微任务队列中的任务（回调）
+
+
+
+## Promise async/await 事件循环面试题
+
+### 面试题1
+
+```js
+console.log("script start")
+
+setTimeout(function () {
+  console.log("setTimeout1");
+  new Promise(function (resolve) {
+    resolve();
+  }).then(function () {
+    new Promise(function (resolve) {
+      resolve();
+    }).then(function () {
+      console.log("then4");
+    });
+    console.log("then2");
+  });
+});
+
+new Promise(function (resolve) {
+  console.log("promise1");
+  resolve();
+}).then(function () {
+  console.log("then1");
+});
+
+setTimeout(function () {
+  console.log("setTimeout2");
+});
+
+console.log(2);
+
+queueMicrotask(() => {
+  console.log("queueMicrotask1")
+});
+
+new Promise(function (resolve) {
+  resolve();
+}).then(function () {
+  console.log("then3");
+});
+
+console.log("script end")
+```
+
+<img src="images/13-3.png" style="float: left; width: 60%">
+
+### 面试题2
+
+```js
+console.log("script start")
+
+function requestData(url) {
+  console.log("requestData")
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("setTimeout")
+      resolve(url)
+    }, 2000);
+  })
+}
+
+function getData() {
+  console.log("getData start")
+  requestData("why").then(res => {
+    console.log("then1-res:", res)
+  })
+  console.log("getData end")
+}
+
+getData()
+
+console.log("script end")
+```
+
+<img src="images/13-4.png" style="float: left; width: 60%">
+
+### 面试题3
+
+```js
+console.log("script start")
+
+function requestData(url) {
+  console.log("requestData")
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("setTimeout")
+      resolve(url)
+    }, 2000);
+  })
+}
+
+async function getData() {
+  console.log("getData start")
+  const res = await requestData("why")
+  // 以下两行被加入微任务队列，在await得到Promise的fulfilled情况后才有可能执行(rejected会抛出异常)
+  // 但执行以下代码时全局执行上下文已经为空
+  console.log("then1-res:", res)
+  console.log("getData end")
+}
+
+getData()
+
+console.log("script end")
+```
+
+<img src="images/13-5.png" style="float: left; width: 60%">
+
+### 面试题4
+
+```js
+async function async1 () {
+  console.log('async1 start')
+  await async2();
+  console.log('async1 end')
+}
+
+async function async2 () {
+  console.log('async2')
+}
+
+console.log('script start')
+
+setTimeout(function () {
+  console.log('setTimeout')
+}, 0)
+
+async1();
+
+new Promise (function (resolve) {
+  console.log('promise1')
+  resolve();
+}).then (function () {
+  console.log('promise2')
+})
+
+console.log('script end')
+```
+
+<img src="images/13-6.png" style="float: left; width: 60%">
