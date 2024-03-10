@@ -109,13 +109,93 @@ return (
 
 
 
-
-
 ## 三、jsx的事件绑定
+
+在React中进行事件监听的注意点：
+
+-  事件的命名采用小驼峰式（camelCase），而不是纯小写
+- 需要通过{}传入一个事件处理函数，这个函数会在事件发生时被执行【eg.  `onClick={btnClick}`】
+
+### this的绑定问题
+
+在事件执行后，我们可能需要获取当前类的对象中相关的属性，这个时候需要用到`this`，而这里的`this`是undefined
+
+- btnClick函数并不是我们主动调用的，而是当button发生改变时，React内部调用了btnClick函数。而在它内部调用时，并没有绑定正确的this
+
+**解决方案**：
+
+方案一：bind给btnClick显示绑定this
+
+方案二：使用 ES6 class fields 语法
+
+方案三：事件监听时传入箭头函数（★）
+
+> `this.btn3Click()`执行函数，绑定`this`到组件（隐式绑定）
+
+```jsx
+class App extends React.Component {
+  // 2.this绑定方式二: ES6 class fields
+  name = "App"
+
+  constructor() {
+    super()
+    this.state = {...}
+    // 1. this绑定方式一: bind绑定
+    this.btn1Click = this.btn1Click.bind(this)
+  }
+  btn1Click() {...}
+  btn2Click = () => {...}
+  btn3Click = () => {...}
+
+  render() {
+    const { message } = this.state
+    return (
+      <div>
+        {/* 1.this绑定方式一: bind绑定 */}
+        <button onClick={this.btn1Click}>按钮1</button>  
+        {/* 2.this绑定方式二: ES6 class fields */}
+        <button onClick={this.btn2Click}>按钮2</button>
+        {/* 3.this绑定方式三: 直接传入一个箭头函数(★) */}
+        <button onClick={() => this.btn3Click()}>按钮3</button>
+      </div>
+    )
+  }
+}
+```
+
+### 事件参数传递
+
+在执行事件函数时，有可能我们需要获取一些参数信息：比如event对象、其他参数等
+
+**情况一：获取event对象**
+
+我们可能需要拿到event对象来做一些事情（比如阻止默认行为），那么默认情况下，event对象有被直接传入，函数就可以获取到event对象
+
+```jsx
+btnClick(event) {
+  console.log("btnClick:", event)
+}
+
+<button onClick={(event) => this.btnClick(event)}>按钮4</button>
+```
+
+**情况二：获取更多参数**
+
+有更多参数时，最好的方式是传入一个箭头函数【bind绑定会有顺序问题】，主动执行的事件函数，并且传入相关的其他参数
+
+```jsx
+btnClick(event, name, age) {
+  console.log("name, age:", name, age)
+}
+
+<button onClick={(event) => this.btnClick(event, "why", 18)}>按钮4</button>
+```
 
 
 
 ## 四、 jsx的条件渲染
+
+
 
 
 
