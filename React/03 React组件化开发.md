@@ -84,6 +84,58 @@ export default App
 
 ## 二、生命周期
 
+### 生命周期的定义
+
+从创建到销毁的整个过程，这个过程称为是**生命周期**，生命周期的主要三阶段：1）挂载 Mount；2）更新 Update；3）卸载 unMount
+
+React内部会对我们组件内部实现的某些函数进行回调，这些函数就是**生命周期函数**
+
+> 注意：谈到React生命周期，基本指的是类组件的生命周期，因为函数式组件在没有hooks模拟时没有生命周期
+
+### 生命周期函数
+
+<img src="images/3-1.png" style="float: left">
+
+#### **Constructor**
+
+constructor中通常只做两件事情：通过给 `this.state` 赋值对象来初始化内部的state；为事件绑定实例（`this`）
+
+> 注意：如果不初始化 state 或不进行方法`this`绑定，可以不需要为 React 组件实现constructor
+
+#### **componentDidMount**
+
+`componentDidMount()` 会在组件挂载后（插入 DOM 树中）立即调用
+
+其中通常进行以下操作：
+
+- 依赖于DOM的操作
+- **发送网络请求（★）**
+- 添加订阅（在`componentWillUnmount`取消订阅）
+
+#### **componentDidUpdate**
+
+`componentDidUpdate()` 会在更新后会被立即调用，首次渲染不会执行此方法
+
+当组件更新后，可以在此处对 DOM 进行操作
+
+> 注：如果对更新前后的 props 进行了比较，也可以选择在此处进行网络请求（例如，当 props 未发生变化时，则不会执行网络请求）
+
+#### **componentWillUnmount**
+
+`componentWillUnmount() `会在组件卸载及销毁之前直接调用
+
+此方法中主要执行必要的清理操作，例如：清除 timer，取消网络请求或清除在 `componentDidMount()` 中创建的订阅等
+
+#### **不常用的生命周期函数**
+
+<img src="images/3-2.png" style="float: left">
+
+**getDerivedStateFromProps**：state 的值在任何时候都依赖于 props 时使用；该方法返回一个对象来更新state
+
+**getSnapshotBeforeUpdate**：在React更新DOM之前回调的一个函数，可以获取DOM更新前的一些信息（比如说滚动位置）
+
+**shouldComponentUpdate**（✔）：是否在update时执行render函数，主要在性能优化时使用
+
 
 
 ## 三、组件通信
