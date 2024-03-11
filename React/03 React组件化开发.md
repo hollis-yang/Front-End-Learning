@@ -140,6 +140,94 @@ constructor中通常只做两件事情：通过给 `this.state` 赋值对象来�
 
 ## 三、组件通信
 
+### ★父传子
+
+- 父组件通过 **属性=值** 的形式来传递给子组件数据（与Vue类似）
+- 子组件通过 **props 参数**获取父组件传递过来的数据
+
+```jsx
+// 父 Main.jsx
+render() {
+  const { banners, productList } = this.state
+  return (
+    <div className='main'>
+      <MainBanner banners={banners} title="轮播图"/>
+    </div>
+  )
+}
+```
+
+```jsx
+// 子 MainBanner.jsx
+// 当子组件没有自己的state时, 可以省略constructor
+constructor(props) {
+  super(props)  // props为一个对象 {banners:[...], title="..."}
+}
+render() {
+  const { title, banners } = this.props  // this.props取到数据
+  return (
+    <div>
+      <h2>{title}</h2>
+      <ul>
+        {
+          banners.map((item, index) => {
+            return <li key={index}>{item}</li>
+          })
+        }
+      </ul>
+    </div>
+  )
+}
+```
+
+### 子组件中指定props类型
+
+在父传子中，如果传递的数据类型错误，可能导致代码报错（如undefined无法map）
+
+- **prop-types**
+
+```jsx
+import PropTypes from 'prop-types'
+。。。
+MainBanner.propTypes = {
+  banners: PropTypes.array.isRequired,
+  title: PropTypes.string
+}
+MainBanner.defaultProps = {
+  banners: [],
+  title: '默认标题'
+}
+```
+
+实际开发中，未必一定要写【对于js项目】；而对于ts项目，直接使用ts即可
+
+更多验证方式：https://www.npmjs.com/package/prop-types
+
+- static propTypes
+
+在ES2022后，可以定义 `static propTypes` 和`prop-types`库来声明组件可接受的 props 类型
+
+```jsx
+import PropTypes from 'prop-types'
+
+class Greeting extends React.Component {
+  static propTypes = {
+    name: PropTypes.string
+  }
+  static defaultProps = {
+    name: 'default'
+  }
+
+  render() {
+    return (
+      <h1>Hello, {this.props.name}</h1>
+    )
+  }
+}
+```
+
+### ★子传父
+
 
 
 ## 四、插槽
