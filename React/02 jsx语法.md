@@ -195,13 +195,192 @@ btnClick(event, name, age) {
 
 ## 四、 jsx的条件渲染
 
+Vue中的条件渲染：`v-if`, `v-show`
 
+React中的条件渲染：`if`
+
+常见的条件渲染方式（`v-if`）：
+
+- `if`语句
+- 三元运算符 
+
+```jsx
+<div>{ isReady ? <button>start</button> : <button>end</button>}</div>
+```
+
+- 与运算符`&&`（当某一个值，有可能为undefined时，使用&&进行条件判断）
+
+```jsx
+<div>{ friend && <div>{friend.name}</div> }</div>
+```
+
+如果要实现`v-show`的操作，直接操作css的display属性即可
+
+```jsx
+<h2 style={{display: isShow ? 'block': 'none'}}>哈哈哈哈</h2>
+```
 
 
 
 ## 五、jsx的列表渲染
 
+Vue中的列表渲染：`v-for`
+
+React中的列表渲染：普通`for`循环和高阶数组函数
+
+常用高阶函数：
+
+- map（★）
+
+```jsx
+students.map(item => {
+  return (
+    <div className="item" key={item.id}>
+      <h2>学号: {item.id}</h2>
+      <h3>姓名: {item.name}</h3>
+      <h1>分数: {item.score}</h1>
+    </div>
+  )
+})
+```
+
+- filter
+
+```jsx
+const filterStudents = students.filter(item => {
+  return item.score > 100
+})
+```
+
+- slice
+
+```jsx
+// slice(start, end): [start, end)
+const sliceStudents = filterStudents.slice(0, 2)
+```
+
+### 列表中的key
+
+列表渲染的jsx中需要添加一个key，主要目的：提高diff算法的效率
+
+```jsx
+return (
+    <div className="item" key={item.id}>
+      <h3>姓名: {item.name}</h3>
+    </div>
+  )
+```
+
 
 
 ## 六、jsx的原理和本质
 
+### React.createElement
+
+实际上，jsx 仅仅只是 `React.createElement(component, props, ...children) `函数的语法糖，所有的jsx最终都会通过babel被转换成`React.createElement`的函数调用
+
+`React.createElement`需要传递三个参数：
+
+- type：当前`ReactElement`的类型
+
+如果是标签元素，那么就使用字符串表示 “div”；如果是组件元素，那么就直接使用组件的名称 "Children"
+
+- config
+
+所有jsx中的属性（如class、id...）都在config中以**对象的属性和值**的形式存储（比如传入className作为元素的class；）
+
+- children
+
+存放在标签中的内容，以children数组的方式进行存储。如果是多个元素，React内部会对其进行处理（本质是形成树的结构）
+
+```jsx
+// jsx
+<div>
+  <div className="header">Header</div>
+  <div className="Content">
+    <div>{message}</div>
+    <ul>
+      <li>列表数据1</li>
+      <li>列表数据2</li>
+      <li>列表数据3</li>
+      <li>列表数据4</li>
+      <li>列表数据5</li>
+    </ul>
+  </div>
+  <div className="footer">Footer</div>
+</div>
+```
+
+```jsx
+// jsx -babel> js
+const element = React.createElement(
+  "div",
+  null,
+/*#__PURE__*/ React.createElement(
+    "div",
+    {
+      className: "header"
+    },
+    "Header"
+  ),
+/*#__PURE__*/ React.createElement(
+    "div",
+    {
+      className: "Content"
+    },
+/*#__PURE__*/ React.createElement("div", null, "Banner"),
+/*#__PURE__*/ React.createElement(
+      "ul",
+      null,
+/*#__PURE__*/ React.createElement(
+        "li",
+        null,
+        "\u5217\u8868\u6570\u636E1"
+      ),
+/*#__PURE__*/ React.createElement(
+        "li",
+        null,
+        "\u5217\u8868\u6570\u636E2"
+      ),
+/*#__PURE__*/ React.createElement(
+        "li",
+        null,
+        "\u5217\u8868\u6570\u636E3"
+      ),
+/*#__PURE__*/ React.createElement(
+        "li",
+        null,
+        "\u5217\u8868\u6570\u636E4"
+      ),
+/*#__PURE__*/ React.createElement("li", null, "\u5217\u8868\u6570\u636E5")
+    )
+  ),
+/*#__PURE__*/ React.createElement(
+    "div",
+    {
+      className: "footer"
+    },
+    "Footer"
+  )
+);
+```
+
+### 虚拟DOM
+
+通过 `React.createElement` 最终创建出来一个 `ReactElement` 对象（js对象，一个虚拟节点）
+
+<img src="images/2-1.png" style="float: left" width=40%>
+
+React利用`ReactElement`对象组成了一个**JavaScript的对象树**，称该对象树为**虚拟DOM（Virtual DOM）**
+
+查看`ReactElement`树结构的方式：打印jsx经babel转换后的element
+
+<img src="images/2-2.png" style="float: left" width=70%>
+
+<img src="images/2-3.png" style="float: left" width=70%>
+
+### 声明式编程
+
+ 虚拟DOM帮助我们从**命令式编程**转到了**声明式编程**的模式
+
+<img src="images/2-4.png" style="float: left">
