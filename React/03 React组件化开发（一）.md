@@ -1,4 +1,4 @@
-# 03 React组件化开发
+# 03 React组件化开发（一）
 
 ## 一、React的组件化
 
@@ -277,15 +277,146 @@ export class AddCounter extends Component {
 }
 ```
 
+### 插槽 slot
+
+在开发中，我们抽取了一个组件，但是为了让这个组件具备更强的通用性，我们不能将组件中的内容限制为固定的div、span等元素，**我们应该让使用者可以决定某一块区域到底存放什么内容**
+
+这样的需求在Vue中通过插槽 slot完成，而在React中【**先明确React没有插槽**（其实也不需要）】，有以下两种方式实现：
+
+#### 1. 组件的children实现slot
+
+每个组件都可以获取到 `props.children`：它包含组件的开始标签和结束标签之间的内容
+
+这里的内容可以是多个标签，此时 `props.children`为数组；若只有一个标签，`props.children`则直接是一个React对象
+
+```jsx
+// 父 App.jsx
+export class App extends Component {
+  render() {
+    return (
+      <div>
+        <NavBar>
+          <button>按钮</button>
+          <h2>title</h2>
+          <i>斜体</i>
+        </NavBar>
+      </div>
+    )
+  }
+}
+```
+
+```jsx
+// 子 NavBar.jsx
+export class NavBar extends Component {
+  render() {
+    const { children } = this.props
+    return (
+      <div className='nav-bar'>
+        <div className='left'>{children[0]}</div>
+        <div className='center'>{children[1]}</div>
+        <div className='right'>{children[2]}</div>
+      </div>
+    )
+  }
+}
+```
+
+#### 2. props实现插槽（✔）
+
+> children实现插槽方案的弊端：
+>
+> - 通过索引值获取传入的元素很容易出错，不能精准的获取传入的原生
+> - 同时children在只有一个元素时会直接传入React对象，最好将children传入的类型（element还是Array）用propType进行限定
+
+通过 props 实现插槽可以在传入和获取时更加精准
+
+```jsx
+// 父 App.jsx
+export class App extends Component {
+  render() {
+    return (
+      <div>
+        <NavBar2
+          leftSlot={<button>按钮</button>}
+          centerSlot={<h2>title</h2>}
+          rightSlot={<i>斜体</i>}
+        >
+        </NavBar2>
+      </div>
+    )
+  }
+}
+```
+
+```jsx
+// 子 NavBar.jsx
+export class NavBar extends Component {
+  render() {
+    const { leftSlot, centerSlot, rightSlot } = this.props
+    return (
+      <div className='nav-bar'>
+        <div className='left'>{leftSlot}</div>
+        <div className='center'>{centerSlot}</div>
+        <div className='right'>{rightSlot}</div>
+      </div>
+    )
+  }
+}
+```
+
+#### 作用域插槽
+
+```jsx
+// 父 App.jsx
+getTabItem(item) {
+  if (item === '流行') {
+    return <span>🔥{item}</span>
+  } else if (item === '新款') {
+    return <button>🆕{item}</button>
+  } else if (item === '精选') {
+    return <i>👑{item}</i>
+  }
+}
+
+render() {
+  const { titles, tabIndex } = this.state
+  return (
+    <div className='app'>
+      <TabControl
+        titles={titles}
+        // itemType={item => <button>{item}</button>}
+        itemType={item => this.getTabItem(item)}
+      />
+      <h1>{titles[tabIndex]}</h1>
+    </div>
+  )
+}
+```
+
+```jsx
+// 子 TabControl.jsx
+render() {
+  const { titles, itemType } = this.props
+  return (
+    <div className='tab-control'>
+      {titles.map((item, index) => {
+        return (
+          <div
+            key={item}
+            {/* <span>{item}</span> */}
+            {itemType(item)}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+```
+
+### 非父子通信 Context
 
 
-
-
-## 四、插槽
-
-
-
-## 五、非父子通信
 
 
 
