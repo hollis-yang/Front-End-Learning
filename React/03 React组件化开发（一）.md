@@ -148,10 +148,14 @@ constructor中通常只做两件事情：通过给 `this.state` 赋值对象来�
 ```jsx
 // 父 Main.jsx
 render() {
-  const { banners, productList } = this.state
+  const { banners, title } = this.state.info
+  // info = {banners:..., title:...}
+  const { info } = this.state
   return (
     <div className='main'>
-      <MainBanner banners={banners} title="轮播图"/>
+      { /*以下两种写法等价*/ }
+      <MainBanner banners={banners} title={title}/>
+      <MainBanner {...info}/>
     </div>
   )
 }
@@ -416,7 +420,161 @@ render() {
 
 ### 非父子通信 Context
 
+Vue当中的非父子通信：provide/inject
 
+React当中提供的API：Context
+
+- Context 提供了一种在组件之间共享值的方式，而不必显式地通过组件树的逐层传递 props
+- Context 设计目的是为了共享那些对于一个组件树而言是“全局”的数据，例如当前认证的用户、主题或首选语言
+
+使用方法：
+
+#### **React.createContext**
+
+- 用于创建一个需要共享的Context对象【一般位于另开的一个文件夹context】
+
+```jsx
+// ./context/theme-context.jsx
+import React from 'react'
+
+// 创建上下文
+const ThemeContext = React.createContext()
+export default ThemeContext
+```
+
+- 如果一个组件订阅了Context，那么这个组件会从**离自身最近的**那个匹配的 Provider 中读取到当前的context值
+
+#### **Context.Provider**
+
+- 每个 Context 对象都会返回一个 Provider React 组件，它允许消费组件订阅 context 的变化。这里的订阅就是指比如这句代码：`HomeInfo.contextType = ThemeContext`
+- Provider 接收一个 **value 属性【必须是value】**，传递给消费组件
+- 当 Provider 的 value 值发生变化时，它内部的所有消费组件都会重新渲染
+
+```jsx
+// App.jsx
+import ThemeContext from './context/theme.context'
+
+export class App extends Component {
+  render() {
+    return (
+      <div>
+        <ThemeContext.Provider value={{color: "red", size: "30"}}>
+          <Home/>
+        </ThemeContext.Provider>
+      </div>
+    )
+  }
+}
+```
+
+- 一个 Provider 可以和多个消费组件有对应关系；多个 Provider 也可以嵌套使用，**里层的会覆盖外层的数据**
+
+```jsx
+render() {
+  return (
+    <div>
+      <h2>home</h2>
+      <UserContext.Provider value={{ color: 'red', size: '20' }}>
+        <ThemeContext.Provider value={{ color: 'green', size: '30' }}>
+          <Home />
+        </ThemeContext.Provider>
+      </UserContext.Provider>
+    </div>
+  )
+}
+```
+
+#### **Class.contextType**
+
+- 挂载在**类组件**上的 **contextType 属性**会被重赋值为一个由 `React.createContext()` 创建的 Context 对象。于是，可以使用 `this.context` 来消费最近 Context 上的那个值
+- 可以在任何生命周期中访问，包括 render函数中
+
+```jsx
+import ThemeContext from './context/theme.context'
+
+export class HomeInfo extends Component {
+  render() {
+    console.log(this.context)
+    return (
+      <div>HomeInfo: {this.context.color}</div>
+    )
+  }
+}
+HomeInfo.contextType = ThemeContext
+export default HomeInfo
+```
+
+#### **Context.Consumer**
+
+- 该API可以在**函数式组件**中使用context
+- 这里需要函数作为子元素（function as child）这种做法，这个函数接收当前的 context 值，返回一个 React 节点
+
+> Context.Consumer的两种使用场景：
+>
+> - 函数式组件
+> - 组件中需要使用多个Context
+
+```jsx
+import ThemeContext from "./context/theme.context"
+
+function HomeBanner() {
+  return (
+    <div>
+      { /* 使用Context.Consumer的情况1：函数式组件 */ }
+      <ThemeContext.Consumer>
+        { /* 函数作为子元素 */}
+        {
+          value => {
+            return <h2>HomeBanner-{value.color}</h2>
+          }
+        }
+      </ThemeContext.Consumer>
+    </div>
+  )
+}
+export default HomeBanner
+```
+
+**使用多个context**
+
+```jsx
+import ThemeContext from './context/theme.context'
+import UserContext from './context/user.context'
+
+export class HomeInfo extends Component {
+  render() {
+    console.log(this.context)
+    return (
+      <div>
+        HomeInfo: {this.context.color}
+        { /* 使用Context.Consumer的情况2：有多个Context */ }
+        <UserContext.Consumer>
+          {(value) => {
+            return <div>HomeInfo: {value.color}</div>
+          }}
+        </UserContext.Consumer>
+      </div>
+    )
+  }
+}
+HomeInfo.contextType = ThemeContext
+export default HomeInfo
+```
+
+#### Context的defaultValue
+
+使用场景：组件在该Context的`Context.Provider`外，这样使用 `this.context`是undefined
+
+```jsx
+<UserContext.Provider value={{ color: 'red', size: '20' }}>...</UserContext.Provider>
+<Profile />
+```
+
+defaultValue是组件在顶层查找过程中没有找到对应的Provider，那么就使用默认值，设置默认值的方法：
+
+```jsx
+const ThemeContext = React.createContext({ color: 'black', size: '100' })
+```
 
 
 
