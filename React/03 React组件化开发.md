@@ -228,6 +228,57 @@ class Greeting extends React.Component {
 
 ### ★子传父
 
+- Vue中子传父是通过自定义事件完成的
+- React中通过 **props** 传递消息，父组件给子组件传递一个回调函数，在子组件中调用这个函数即可
+
+```jsx
+// 父 App.jsx
+export class App extends Component {
+  constructor() {
+    super()
+    this.state = {
+      counter: 100,
+    }
+  }
+
+  changeCounter(count) {
+    this.setState({
+      counter: this.state.counter + count,
+    })
+  }
+
+  render() {
+    const { counter } = this.state
+    return (
+        <div>
+          <h2>{counter}</h2>
+          <AddCounter addClick={(count) => {this.changeCounter(count)}} />
+        </div>
+      )
+  }
+}
+```
+
+```jsx
+// 子 AddCounter.jsx
+export class AddCounter extends Component {
+  addCount(count) {
+    this.props.addClick(count) // 拿到props
+  }
+
+  render() {
+    return (
+      <div>
+        <button onClick={() => this.addCount(5)}>+5</button>
+        <button onClick={() => this.addCount(10)}>+10</button>
+      </div>
+    )
+  }
+}
+```
+
+
+
 
 
 ## 四、插槽
