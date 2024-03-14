@@ -10,7 +10,8 @@ import ReactDOM from 'react-dom/client'
 // import App from './06_组件通信案例/App'
 // import App from './07_插槽/App'
 // import App from './08_作用域插槽/App'
-import App from './09_非父子通信/App'
+// import App from './09_非父子通信/App'
+import App from './10_setState/App'
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'))

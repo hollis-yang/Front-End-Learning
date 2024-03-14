@@ -575,8 +575,3 @@ defaultValue是组件在顶层查找过程中没有找到对应的Provider，那
 ```jsx
 const ThemeContext = React.createContext({ color: 'black', size: '100' })
 ```
-
-
-
-## 六、setState使用详解
-
