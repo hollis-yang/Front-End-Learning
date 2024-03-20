@@ -11,7 +11,9 @@ import ReactDOM from 'react-dom/client'
 // import App from './07_插槽/App'
 // import App from './08_作用域插槽/App'
 // import App from './09_非父子通信/App'
-import App from './10_setState/App'
+// import App from './10_setState/App'
+// import App from './11_render函数优化/App'
+import App from './12_不可变数据的力量/App'
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
