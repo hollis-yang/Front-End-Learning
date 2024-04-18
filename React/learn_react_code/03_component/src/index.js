@@ -13,8 +13,8 @@ import ReactDOM from 'react-dom/client'
 // import App from './09_非父子通信/App'
 // import App from './10_setState/App'
 // import App from './11_render函数优化/App'
-import App from './12_不可变数据的力量/App'
-
+// import App from './12_不可变数据的力量/App'
+import App from './13_ref获取DOM与组件/03_ref获取函数组件内部DOM'
 
 const root = ReactDOM.createRoot(document.getElementById('root'))
 root.render(<App />)

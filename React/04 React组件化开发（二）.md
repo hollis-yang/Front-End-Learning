@@ -241,11 +241,143 @@ shouldComponentUpdate(nextProps, nextState) {
 
 
 
-## 三、获取DOM方式refs
+## 三、获取DOM/组件方式refs
 
+### DOM
 
+> 在React的开发模式中，通常情况下不需要、也不建议直接操作DOM原生，但是某些特殊的情况，确实需要获取到DOM进行某些操作：
+>
+> - 管理焦点，文本选择或媒体播放
+> - 触发强制动画
+> - 第三方库中需要
 
+React 提供了三种方式创建 refs 获取对应的DOM：
 
+**方式1：在React元素上绑定ref字符串（不推荐）**
+
+```html
+<h2 ref="why">Hello World</h2>
+```
+
+```jsx
+console.log(this.refs.why)
+```
+
+**方式2：提前创建好ref对象（`React.createRef()`）, 将该对象绑定到元素的current熟悉，使用时获取current即可）（推荐✔）**
+
+```jsx
+<h2 ref={this.titleRef}>你好李银河</h2>
+```
+
+```jsx
+constructor() {
+  this.titleRef = React.createRef()
+}
+getNativeDOM() {
+  console.log(this.titleRef.current)
+}
+```
+
+**方式3：传入回调函数，该函数会传入一个元素对象（el），在DOM被挂载时回调，此时可以进行保存**
+
+```jsx
+<h2 ref={el => {this.titleEl = el}}>Hello Geo</h2>
+```
+
+```jsx
+constructor() {
+  this.titleEl = React.createRef()
+}
+getNativeDOM() {
+  console.log(this.titleEl)
+}
+```
+
+### 类组件（实例）
+
+当 ref 用于类组件时，ref 对象接收组件的挂载实例作为其 current 属性
+
+```jsx
+// 类组件
+import React, { PureComponent } from 'react'
+
+class Home extends PureComponent {
+  test() {
+    console.log('test---')
+  }
+
+  render() {
+    return <h2>Home</h2>
+  }
+}
+
+export class App extends PureComponent {
+  constructor() {
+    super()
+    this.hmRef = React.createRef()  // 创建ref
+  }
+
+  getComponent() {
+    console.log(this.hmRef.current)
+    this.hmRef.current.test()  // 调用实例方法
+  }
+
+  render() {
+    return (
+      <div>
+        <Home ref={this.hmRef}/>
+        <button onClick={() => this.getComponent()}>获取组件实例</button>
+      </div>
+    )
+  }
+}
+
+export default App
+```
+
+### 函数组件（中的DOM）
+
+==但 ref 不能用于函数式组件！！因为它们根本就没有组件实例！！==
+
+然而某些时候，我们可能想要获取**函数式组件中的某个DOM元素**，这时可以使用`React.forwardRef()`
+
+- 相当于实现了类似“转发”的效果
+
+```jsx
+import React, { PureComponent, forwardRef } from 'react'
+
+const Home = forwardRef(function (props, ref) {
+  return (
+    // 绑定ref到h2
+    <div>
+      <h2 ref={ref}>Hello World</h2>
+      <p>12345</p>
+    </div>
+  )
+})
+
+export class App extends PureComponent {
+  constructor() {
+    super()
+    this.hmRef = React.createRef()
+  }
+
+  getComponent() {
+    console.log(this.hmRef.current)  // 打印<h2>标签(DOM)
+  }
+
+  render() {
+    return (
+      <div>
+        <Home ref={this.hmRef} />
+        <button onClick={() => this.getComponent()}>获取组件实例</button>
+      </div>
+    )
+  }
+}
+
+export default App
+```
 
 
 
